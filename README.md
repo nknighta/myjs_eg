@@ -4,8 +4,20 @@ try javascript engine test
 
 > this repository using ai assistant to generate code
 
-ai assistant
+### using ai assistant
 - Gemini https://ai.google.dev/gemini
 - GitHub Copilot https://gh.io/copilot
 
-Example: var i = 0; while (i < 3) { i = i + 1; }; i;
+# install and build
+
+```bash
+git clone https://github.com/nknighta/myjs_eg
+cd myjs_eg
+make
+```
+
+# run
+
+```bash
+./build/sample_js_engine sample.js
+```
