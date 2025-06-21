@@ -15,6 +15,7 @@ std::string Token::to_string() const {
         case TokenType::VAR:     return "VAR";
         case TokenType::IF:      return "IF";
         case TokenType::ELSE:    return "ELSE";
+        case TokenType::WHILE:   return "WHILE"; // <-- WHILE を追加
         case TokenType::TRUE:    return "TRUE";
         case TokenType::FALSE:   return "FALSE";
         case TokenType::ID:      return "ID(" + name + ")";

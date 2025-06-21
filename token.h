@@ -8,7 +8,8 @@
 enum class TokenType {
     DOUBLE, PLUS, MINUS, MUL, DIV,
     LPAREN, RPAREN, LBRACE, RBRACE,
-    VAR, IF, ELSE, TRUE, FALSE,
+    VAR, IF, ELSE, WHILE, // <-- WHILE を追加
+    TRUE, FALSE,
     ID, ASSIGN, EQ, NEQ, LT, GT, LTE, GTE,
     SEMI, END_OF_FILE
 };
@@ -19,7 +20,8 @@ struct Token {
     double value {0.0};
     std::string name;
 
-    std::string to_string() const; // 実装は .cpp ファイルへ（今回は簡潔さのためここに残します）
+    // トークンをデバッグ用に文字列に変換する
+    std::string to_string() const;
 };
 
 #endif // TOKEN_H

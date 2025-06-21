@@ -17,24 +17,22 @@ struct NumberNode;
 struct VarNode;
 struct BinOpNode;
 struct VarDeclNode;
+struct AssignmentNode; // <-- AssignmentNode の前方宣言を追加
 struct CompoundNode;
 struct IfNode;
+struct WhileNode;
 
-// 数値ノード
+// (他のノード宣言は変更なし)
 struct NumberNode : public ASTNode {
     Token token;
     NumberNode(Token token);
     double evaluate() const override;
 };
-
-// 変数参照ノード
 struct VarNode : public ASTNode {
     Token token;
     VarNode(Token token);
     double evaluate() const override;
 };
-
-// 二項演算ノード
 struct BinOpNode : public ASTNode {
     std::unique_ptr<ASTNode> left;
     Token op;
@@ -42,8 +40,6 @@ struct BinOpNode : public ASTNode {
     BinOpNode(std::unique_ptr<ASTNode> l, Token o, std::unique_ptr<ASTNode> r);
     double evaluate() const override;
 };
-
-// 変数宣言ノード
 struct VarDeclNode : public ASTNode {
     std::string var_name;
     std::unique_ptr<ASTNode> expr;
@@ -51,18 +47,29 @@ struct VarDeclNode : public ASTNode {
     double evaluate() const override;
 };
 
-// 複数の文をまとめるノード
+// NEW: 代入ノード
+struct AssignmentNode : public ASTNode {
+    Token var_token;
+    std::unique_ptr<ASTNode> expr;
+    AssignmentNode(Token token, std::unique_ptr<ASTNode> e);
+    double evaluate() const override;
+};
+
 struct CompoundNode : public ASTNode {
     std::vector<std::unique_ptr<ASTNode>> children;
     double evaluate() const override;
 };
-
-// If-Else ノード
 struct IfNode : public ASTNode {
     std::unique_ptr<ASTNode> condition;
     std::unique_ptr<ASTNode> then_branch;
     std::unique_ptr<ASTNode> else_branch;
     IfNode(std::unique_ptr<ASTNode> cond, std::unique_ptr<ASTNode> then_b, std::unique_ptr<ASTNode> else_b);
+    double evaluate() const override;
+};
+struct WhileNode : public ASTNode {
+    std::unique_ptr<ASTNode> condition;
+    std::unique_ptr<ASTNode> body;
+    WhileNode(std::unique_ptr<ASTNode> cond, std::unique_ptr<ASTNode> body);
     double evaluate() const override;
 };
 

@@ -22,8 +22,12 @@ private:
     std::unique_ptr<ASTNode> statement();
     std::unique_ptr<ASTNode> block();
     std::unique_ptr<ASTNode> if_statement();
+    std::unique_ptr<ASTNode> while_statement();
     std::unique_ptr<ASTNode> variable_declaration();
+    // NEW: Expression parsing hierarchy
     std::unique_ptr<ASTNode> expression();
+    std::unique_ptr<ASTNode> assignment();
+    std::unique_ptr<ASTNode> comparison();
     std::unique_ptr<ASTNode> arith_expr();
     std::unique_ptr<ASTNode> term();
     std::unique_ptr<ASTNode> factor();

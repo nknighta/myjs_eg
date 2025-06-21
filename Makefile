@@ -7,7 +7,7 @@ CXXFLAGS = -std=c++17 -Wall -g -I. -MMD -MP
 BUILD_DIR = build
 
 # ソースファイル
-SOURCES = main.cpp lexer.cpp perser.cpp ast.cpp token.cpp
+SOURCES = main.cpp lexer.cpp parser.cpp ast.cpp token.cpp
 
 # オブジェクトファイル（buildディレクトリ内に配置）
 OBJECTS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(SOURCES))

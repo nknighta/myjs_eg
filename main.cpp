@@ -1,16 +1,16 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
-#include <stdexcept> 
+#include <stdexcept>
 #include "lexer.h"
-#include "perser.h"
+#include "parser.h"
 
-// グローバルなシンボルテーブルをここで定義
+// Global symbol table
 std::unordered_map<std::string, double> symbol_table;
 
 int main() {
-    std::cout << "if-else/比較対応インタプリタ (exitで終了)" << std::endl;
-    std::cout << "例: var x = 10; if (x > 5) { 100 } else { 200 }" << std::endl;
+    std::cout << "Interpreter with assignment and 'while' support (type 'exit' to quit)" << std::endl;
+    std::cout << "Example: var i = 0; while (i < 3) { i = i + 1; }; i;" << std::endl;
 
     std::string input;
     while (true) {

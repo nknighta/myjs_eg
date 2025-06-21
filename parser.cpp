@@ -1,5 +1,4 @@
-#include "perser.h"
-#include <stdexcept>
+#include "parser.h"
 #include <stdexcept>
 
 Parser::Parser(Lexer& lexer) : lexer_(lexer) {
@@ -44,6 +43,7 @@ std::unique_ptr<ASTNode> Parser::statement_list() {
 std::unique_ptr<ASTNode> Parser::statement() {
     if (current_token_.type == TokenType::VAR) return variable_declaration();
     if (current_token_.type == TokenType::IF) return if_statement();
+    if (current_token_.type == TokenType::WHILE) return while_statement();
     if (current_token_.type == TokenType::LBRACE) return block();
     return expression();
 }
@@ -69,6 +69,15 @@ std::unique_ptr<ASTNode> Parser::if_statement() {
     return std::make_unique<IfNode>(std::move(condition), std::move(then_branch), std::move(else_branch));
 }
 
+std::unique_ptr<ASTNode> Parser::while_statement() {
+    eat(TokenType::WHILE);
+    eat(TokenType::LPAREN);
+    auto condition = expression();
+    eat(TokenType::RPAREN);
+    auto body = statement();
+    return std::make_unique<WhileNode>(std::move(condition), std::move(body));
+}
+
 std::unique_ptr<ASTNode> Parser::variable_declaration() {
     eat(TokenType::VAR);
     Token var_token = current_token_;
@@ -76,6 +85,65 @@ std::unique_ptr<ASTNode> Parser::variable_declaration() {
     eat(TokenType::ASSIGN);
     auto expr_node = expression();
     return std::make_unique<VarDeclNode>(var_token.name, std::move(expr_node));
+}
+
+// --- NEW/UPDATED EXPRESSION PARSING HIERARCHY ---
+
+std::unique_ptr<ASTNode> Parser::expression() {
+    return assignment();
+}
+
+std::unique_ptr<ASTNode> Parser::assignment() {
+    auto node = comparison(); // Parse the left-hand side
+
+    if (current_token_.type == TokenType::ASSIGN) {
+        VarNode* var_node = dynamic_cast<VarNode*>(node.get());
+        if (var_node == nullptr) {
+            throw std::runtime_error("Parser error: Invalid left-hand side in assignment.");
+        }
+        
+        Token var_token = var_node->token;
+        eat(TokenType::ASSIGN);
+        
+        auto right_expr = expression(); // Recursively call expression for right-to-left associativity
+        
+        return std::make_unique<AssignmentNode>(var_token, std::move(right_expr));
+    }
+
+    return node; // It was not an assignment, return the comparison node
+}
+
+std::unique_ptr<ASTNode> Parser::comparison() {
+    auto node = arith_expr();
+    while (current_token_.type == TokenType::EQ || current_token_.type == TokenType::NEQ ||
+           current_token_.type == TokenType::LT || current_token_.type == TokenType::GT ||
+           current_token_.type == TokenType::LTE || current_token_.type == TokenType::GTE) {
+        Token token = current_token_;
+        eat(token.type);
+        node = std::make_unique<BinOpNode>(std::move(node), token, arith_expr());
+    }
+    return node;
+}
+
+
+std::unique_ptr<ASTNode> Parser::arith_expr() {
+    auto node = term();
+    while (current_token_.type == TokenType::PLUS || current_token_.type == TokenType::MINUS) {
+        Token token = current_token_;
+        eat(token.type);
+        node = std::make_unique<BinOpNode>(std::move(node), token, term());
+    }
+    return node;
+}
+
+std::unique_ptr<ASTNode> Parser::term() {
+    auto node = factor();
+    while (current_token_.type == TokenType::MUL || current_token_.type == TokenType::DIV) {
+        Token token = current_token_;
+        eat(token.type);
+        node = std::make_unique<BinOpNode>(std::move(node), token, factor());
+    }
+    return node;
 }
 
 std::unique_ptr<ASTNode> Parser::factor() {
@@ -95,35 +163,3 @@ std::unique_ptr<ASTNode> Parser::factor() {
     throw std::runtime_error("Parser error: invalid factor");
 }
 
-std::unique_ptr<ASTNode> Parser::term() {
-    auto node = factor();
-    while (current_token_.type == TokenType::MUL || current_token_.type == TokenType::DIV) {
-        Token token = current_token_;
-        eat(token.type);
-        node = std::make_unique<BinOpNode>(std::move(node), token, factor());
-    }
-    return node;
-}
-
-std::unique_ptr<ASTNode> Parser::arith_expr() {
-    auto node = term();
-    while (current_token_.type == TokenType::PLUS || current_token_.type == TokenType::MINUS) {
-        Token token = current_token_;
-        eat(token.type);
-        // BUG FIX: The right-hand side of the expression must be a `term` to avoid infinite recursion.
-        node = std::make_unique<BinOpNode>(std::move(node), token, term());
-    }
-    return node;
-}
-
-std::unique_ptr<ASTNode> Parser::expression() {
-    auto node = arith_expr();
-    while (current_token_.type == TokenType::EQ || current_token_.type == TokenType::NEQ ||
-           current_token_.type == TokenType::LT || current_token_.type == TokenType::GT ||
-           current_token_.type == TokenType::LTE || current_token_.type == TokenType::GTE) {
-        Token token = current_token_;
-        eat(token.type);
-        node = std::make_unique<BinOpNode>(std::move(node), token, arith_expr());
-    }
-    return node;
-}

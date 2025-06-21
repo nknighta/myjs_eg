@@ -12,9 +12,12 @@ BinOpNode::BinOpNode(std::unique_ptr<ASTNode> l, Token o, std::unique_ptr<ASTNod
     : left(std::move(l)), op(std::move(o)), right(std::move(r)) {}
 VarDeclNode::VarDeclNode(std::string name, std::unique_ptr<ASTNode> e)
     : var_name(std::move(name)), expr(std::move(e)) {}
+AssignmentNode::AssignmentNode(Token token, std::unique_ptr<ASTNode> e)
+    : var_token(std::move(token)), expr(std::move(e)) {}
 IfNode::IfNode(std::unique_ptr<ASTNode> cond, std::unique_ptr<ASTNode> then_b, std::unique_ptr<ASTNode> else_b)
     : condition(std::move(cond)), then_branch(std::move(then_b)), else_branch(std::move(else_b)) {}
-
+WhileNode::WhileNode(std::unique_ptr<ASTNode> cond, std::unique_ptr<ASTNode> b)
+    : condition(std::move(cond)), body(std::move(b)) {}
 
 // --- evaluateメソッドの実装 ---
 double NumberNode::evaluate() const { return token.value; }
@@ -50,6 +53,15 @@ double VarDeclNode::evaluate() const {
     return val;
 }
 
+double AssignmentNode::evaluate() const {
+    if (symbol_table.find(var_token.name) == symbol_table.end()) {
+        throw std::runtime_error("Runtime error: variable '" + var_token.name + "' is not declared.");
+    }
+    double val = expr->evaluate();
+    symbol_table[var_token.name] = val;
+    return val;
+}
+
 double CompoundNode::evaluate() const {
     double result = 0.0;
     for (const auto& child : children) {
@@ -65,4 +77,12 @@ double IfNode::evaluate() const {
         return else_branch->evaluate();
     }
     return 0.0;
+}
+
+double WhileNode::evaluate() const {
+    double result = 0.0;
+    while (condition->evaluate() != 0) {
+        result = body->evaluate();
+    }
+    return result;
 }

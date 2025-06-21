@@ -6,6 +6,7 @@ Lexer::Lexer(std::string text) : text_(std::move(text)), pos_(0) {
     reserved_keywords["var"] = Token{TokenType::VAR};
     reserved_keywords["if"] = Token{TokenType::IF};
     reserved_keywords["else"] = Token{TokenType::ELSE};
+    reserved_keywords["while"] = Token{TokenType::WHILE}; // <-- whileキーワードを追加
     reserved_keywords["true"] = Token{TokenType::TRUE, 1.0};
     reserved_keywords["false"] = Token{TokenType::FALSE, 0.0};
 }
@@ -19,7 +20,7 @@ Token Lexer::get_next_token() {
     while (pos_ < text_.length()) {
         char current_char = text_[pos_];
         if (isspace(current_char)) { pos_++; continue; }
-        if (isalpha(current_char) || current_char == '_') { return identifier(); }
+        if (isalpha(current_char)) { return identifier(); }
         if (isdigit(current_char) || current_char == '.') { return number(); }
         if (current_char == '=' && peek() == '=') { pos_ += 2; return {TokenType::EQ}; }
         if (current_char == '!' && peek() == '=') { pos_ += 2; return {TokenType::NEQ}; }
@@ -53,7 +54,7 @@ Token Lexer::number() {
 
 Token Lexer::identifier() {
     std::string result;
-    while (pos_ < text_.length() && (isalnum(text_[pos_]) || text_[pos_] == '_')) {
+    while (pos_ < text_.length() && isalnum(text_[pos_])) {
         result += text_[pos_++];
     }
     if (reserved_keywords.count(result)) return reserved_keywords.at(result);
