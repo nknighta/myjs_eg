@@ -1,88 +1,27 @@
 #include "ast.h"
-#include <stdexcept>
-#include <unordered_map>
+#include <utility>
 
-// グローバルなシンボルテーブルを外部から参照
-extern std::unordered_map<std::string, double> symbol_table;
+// --- ElementNode ---
+ElementNode::ElementNode(std::string tag_name, AttrMap attributes, NodeList children)
+    : tag_name(std::move(tag_name)),
+      attributes(std::move(attributes)),
+      children(std::move(children)) {}
 
-// --- コンストラクタの実装 ---
-NumberNode::NumberNode(Token token) : token(std::move(token)) {}
-VarNode::VarNode(Token token) : token(std::move(token)) {}
-BinOpNode::BinOpNode(std::unique_ptr<ASTNode> l, Token o, std::unique_ptr<ASTNode> r)
-    : left(std::move(l)), op(std::move(o)), right(std::move(r)) {}
-VarDeclNode::VarDeclNode(std::string name, std::unique_ptr<ASTNode> e)
-    : var_name(std::move(name)), expr(std::move(e)) {}
-AssignmentNode::AssignmentNode(Token token, std::unique_ptr<ASTNode> e)
-    : var_token(std::move(token)), expr(std::move(e)) {}
-IfNode::IfNode(std::unique_ptr<ASTNode> cond, std::unique_ptr<ASTNode> then_b, std::unique_ptr<ASTNode> else_b)
-    : condition(std::move(cond)), then_branch(std::move(then_b)), else_branch(std::move(else_b)) {}
-WhileNode::WhileNode(std::unique_ptr<ASTNode> cond, std::unique_ptr<ASTNode> b)
-    : condition(std::move(cond)), body(std::move(b)) {}
-
-// --- evaluateメソッドの実装 ---
-double NumberNode::evaluate() const { return token.value; }
-
-double VarNode::evaluate() const {
-    if (symbol_table.count(token.name)) return symbol_table.at(token.name);
-    throw std::runtime_error("Runtime error: '" + token.name + "' is not defined.");
+const std::string& ElementNode::get_tag_name() const {
+    return tag_name;
 }
 
-double BinOpNode::evaluate() const {
-    double left_val = left->evaluate();
-    double right_val = right->evaluate();
-    switch(op.type) {
-        case TokenType::PLUS: return left_val + right_val;
-        case TokenType::MINUS: return left_val - right_val;
-        case TokenType::MUL: return left_val * right_val;
-        case TokenType::DIV:
-             if (right_val == 0) throw std::runtime_error("Runtime error: Division by zero.");
-             return left_val / right_val;
-        case TokenType::EQ: return left_val == right_val;
-        case TokenType::NEQ: return left_val != right_val;
-        case TokenType::LT: return left_val < right_val;
-        case TokenType::GT: return left_val > right_val;
-        case TokenType::LTE: return left_val <= right_val;
-        case TokenType::GTE: return left_val >= right_val;
-        default: throw std::runtime_error("Runtime error: invalid binary operator");
-    }
+const AttrMap& ElementNode::get_attributes() const {
+    return attributes;
 }
 
-double VarDeclNode::evaluate() const {
-    double val = expr->evaluate();
-    symbol_table[var_name] = val;
-    return val;
+const NodeList& ElementNode::get_children() const {
+    return children;
 }
 
-double AssignmentNode::evaluate() const {
-    if (symbol_table.find(var_token.name) == symbol_table.end()) {
-        throw std::runtime_error("Runtime error: variable '" + var_token.name + "' is not declared.");
-    }
-    double val = expr->evaluate();
-    symbol_table[var_token.name] = val;
-    return val;
-}
+// --- TextNode ---
+TextNode::TextNode(std::string text) : text(std::move(text)) {}
 
-double CompoundNode::evaluate() const {
-    double result = 0.0;
-    for (const auto& child : children) {
-        result = child->evaluate();
-    }
-    return result;
-}
-
-double IfNode::evaluate() const {
-    if (condition->evaluate() != 0) {
-        return then_branch->evaluate();
-    } else if (else_branch) {
-        return else_branch->evaluate();
-    }
-    return 0.0;
-}
-
-double WhileNode::evaluate() const {
-    double result = 0.0;
-    while (condition->evaluate() != 0) {
-        result = body->evaluate();
-    }
-    return result;
+const std::string& TextNode::get_text() const {
+    return text;
 }

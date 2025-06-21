@@ -1,13 +1,15 @@
 # コンパイラとオプション
 CXX = g++
 # -MMD -MPフラグはヘッダーファイルの依存関係を生成するために追加
-CXXFLAGS = -std=c++17 -Wall -g -I. -MMD -MP
+CXXFLAGS = -std=c++17 -Wall -g -I. -MMD -MP -DUNICODE -D_UNICODE
+LDFLAGS = -mwindows
+
 
 # ビルドディレクトリ
 BUILD_DIR = build
 
 # ソースファイル
-SOURCES = main.cpp lexer.cpp parser.cpp ast.cpp token.cpp
+SOURCES = ast.cpp html_parser.cpp window.cpp main.cpp js_engine.cpp
 
 # オブジェクトファイル（buildディレクトリ内に配置）
 OBJECTS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(SOURCES))
@@ -16,16 +18,19 @@ OBJECTS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(SOURCES))
 DEPS = $(OBJECTS:.o=.d)
 
 # 実行ファイル名
-EXECUTABLE = $(BUILD_DIR)/simple_js_engine
+EXECUTABLE = $(BUILD_DIR)/window_app.exe
 
 # デフォルトターゲット
 .PHONY: all
 all: $(EXECUTABLE)
 
+.PHONY: window
+window: $(EXECUTABLE)
+
 # 実行ファイルのリンク
 $(EXECUTABLE): $(OBJECTS)
 	@echo "Linking..."
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) -o $@ $^ $(LDFLAGS)
 
 # buildディレクトリ作成ルールをオブジェクトファイルの依存関係として設定 (Order-only)
 $(OBJECTS): | $(BUILD_DIR)

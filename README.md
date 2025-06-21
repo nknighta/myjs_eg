@@ -13,11 +13,13 @@ try javascript engine test
 ```bash
 git clone https://github.com/nknighta/myjs_eg
 cd myjs_eg
-make
+make all
 ```
 
 # run
 
 ```bash
-./build/sample_js_engine sample.js
+.\build\window_app.exe .\samples\sample.html
 ```
+
+![alt text](image.png)

@@ -1,49 +1,68 @@
 #include <iostream>
 #include <string>
-#include <unordered_map>
 #include <fstream>
 #include <sstream>
-#include "lexer.h"
-#include "parser.h"
+#include <vector>
+#include "html_parser.h"
+#include "window.h"
+#include <windows.h>
+#include "js_engine.h"
 
-// Global symbol table
-std::unordered_map<std::string, double> symbol_table;
-
-void execute_code(const std::string& code) {
-    try {
-        Lexer lexer(code);
-        Parser parser(lexer);
-        std::unique_ptr<ASTNode> ast = parser.parse();
-        double result = ast->evaluate();
-        std::cout << "=> " << result << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-    }
+// Helper function to convert std::string to std::wstring
+std::wstring s2ws(const std::string& s) {
+    int len;
+    int slength = (int)s.length() + 1;
+    len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, 0, 0);
+    wchar_t* buf = new wchar_t[len];
+    MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, buf, len);
+    std::wstring r(buf);
+    delete[] buf;
+    return r;
 }
 
-int main(int argc, char* argv[]) {
-    if (argc > 1) {
-        std::string filename = argv[1];
-        std::ifstream file(filename);
-        if (!file.is_open()) {
-            std::cerr << "Could not open file: " << filename << std::endl;
-            return 1;
-        }
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        execute_code(buffer.str());
-    } else {
-        std::cout << "Interpreter with assignment and 'while' support (type 'exit' to quit)" << std::endl;
-        std::cout << "Example: var i = 0; while (i < 3) { i = i + 1; }; i;" << std::endl;
-
-        std::string input;
-        while (true) {
-            std::cout << "> ";
-            std::getline(std::cin, input);
-            if (input == "exit") break;
-            if (input.empty()) continue;
-            execute_code(input);
-        }
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    if (__argc < 2) {
+        MessageBox(NULL, L"HTMLファイルを指定してください。", L"エラー", MB_OK | MB_ICONERROR);
+        return 1;
     }
-    return 0;
+
+    std::string filename = __argv[1];
+    if (filename.substr(filename.find_last_of(".") + 1) != "html") {
+        MessageBox(NULL, L"HTMLファイルを指定してください。", L"エラー", MB_OK | MB_ICONERROR);
+        return 1;
+    }
+
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::string error_message_str = "ファイルを開けませんでした: " + filename;
+        std::wstring error_message_wstr = s2ws(error_message_str);
+        MessageBox(NULL, error_message_wstr.c_str(), L"エラー", MB_OK | MB_ICONERROR);
+        return 1;
+    }
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string content = buffer.str();
+
+    HTMLParser html_parser(content);
+    std::vector<std::string> scripts = html_parser.get_scripts();
+    std::vector<std::string> paragraphs = html_parser.get_paragraphs();
+    
+    SimpleJSEngine engine;
+    for (const auto& script : scripts) {
+        engine.execute(script);
+    }
+
+    HWND hWnd = CreateBrowserWindow(hInstance, nCmdShow, paragraphs);
+
+    if (!hWnd) {
+        return 1;
+    }
+
+    MSG msg = {};
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    return static_cast<int>(msg.wParam);
 }
