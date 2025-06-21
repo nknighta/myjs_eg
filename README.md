@@ -7,3 +7,5 @@ try javascript engine test
 ai assistant
 - Gemini https://ai.google.dev/gemini
 - GitHub Copilot https://gh.io/copilot
+
+Example: var i = 0; while (i < 3) { i = i + 1; }; i;
